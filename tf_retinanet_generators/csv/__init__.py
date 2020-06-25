@@ -44,7 +44,6 @@ def from_config(config, submodels_manager, preprocess_image, **kwargs):
 	"""
     # Set default configuration parameters.
     config = set_defaults(config, default_config)
-
     # If no annotations dir is set, ask the user for it.
     if ("train_annotations_path" not in config) or not config["train_annotations_path"]:
         config["train_annotations_path"] = input(
@@ -53,6 +52,15 @@ def from_config(config, submodels_manager, preprocess_image, **kwargs):
     if ("train_classes_path" not in config) or not config["train_classes_path"]:
         config["train_classes_path"] = input(
             "Please input the train classes CSV folder:"
+        )
+    
+    if ("val_annotations_path" not in config) or not config["val_annotations_path"]:
+        config["val_annotations_path"] = input(
+            "Please input the val annotations CSV folder:"
+        )
+    if ("val_classes_path" not in config) or not config["val_classes_path"]:
+        config["val_classes_path"] = input(
+            "Please input the val classes CSV folder:"
         )
 
     generators = {}
@@ -67,25 +75,26 @@ def from_config(config, submodels_manager, preprocess_image, **kwargs):
         from tf_retinanet.generators import Generator
     CSVGenerator = get_csv_generator(Generator)
 
+    print(config)
     # If needed, get the annotations generator.
     if (
         config["train_annotations_path"] is not None
         and config["train_classes_path"] is not None
     ):
         generators["train"] = CSVGenerator(
-            config["train_annotations_path"], config["train_classes_path"]
+            config["train_annotations_path"], config["train_classes_path"],**config
         )
 
     # If needed, get the validation generator.
     if config["val_annotations_path"] is not None:
         generators["validation"] = CSVGenerator(
-            config["val_annotations_path"], config["val_classes_path"]
+            config["val_annotations_path"], config["val_classes_path"],**config
         )
 
     # If needed, get the validation generator.
     if config["test_annotations_path"] is not None:
         generators["test"] = CSVGenerator(
-            config["test_annotations_path"], config["test_classes_path"]
+            config["test_annotations_path"], config["test_classes_path"],**config
         )
 
         # Disable the transformations after getting the CSV generator.
@@ -98,4 +107,4 @@ def from_config(config, submodels_manager, preprocess_image, **kwargs):
     # Instantiate the submodels for this generator.
     submodels_manager.create(num_classes=generators["train"].num_classes())
 
-    return generators, submodels_manager.get_submodels()
+    return generators, submodels_manager.get_submodels(), config
